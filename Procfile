@@ -1,0 +1,1 @@
+web: gunicorn callchat.wsgi --log-file -
