@@ -1,4 +1,4 @@
-const APP_ID = '47e958466a5548f89b96a338d6215fe2'
+const APP_ID = 'b4d826ad9c1b4ec49841d0caa8d4698e'
 const CHANNEL = sessionStorage.getItem('room')
 const TOKEN = sessionStorage.getItem('token')
 let UID = Number(sessionStorage.getItem('UID'))
@@ -14,7 +14,10 @@ const client = AgoraRTC.createClient({
 let localTracks = []
 let remoteUsers = {}
 
+
 let joinAndDisplayLocalStream = async () => {
+
+    console.log('Attempting to join channel:', CHANNEL, 'with UID:', UID, 'and TOKEN:', TOKEN);
 
     document.getElementById('room-name').innerText = CHANNEL
     client.on('user-published', handlerUserJoined)
@@ -22,8 +25,9 @@ let joinAndDisplayLocalStream = async () => {
 
     try {
         await client.join(APP_ID, CHANNEL, TOKEN, UID)
+        console.log('Successfully joined channel');
     } catch (error) {
-        console.error(error)
+        console.error('Error while joining channel:', error)
         window.open('/', '_self')
     }
 
@@ -39,12 +43,13 @@ let joinAndDisplayLocalStream = async () => {
     document.getElementById('video-streams').insertAdjacentHTML('beforeend', player)
     localTracks[1].play(`user-${UID}`)
 
+    console.log('Publishing local tracks');
     await client.publish([localTracks[0], localTracks[1]])
-
-
+    console.log('Successfully published local tracks');
 }
 
 let handlerUserJoined = async (user, mediaType) => {
+    console.log('User joined:', user, 'mediaType:', mediaType);
     remoteUsers[user.uid] = user
     await client.subscribe(user, mediaType)
 
@@ -61,13 +66,10 @@ let handlerUserJoined = async (user, mediaType) => {
             <div class="username-wrapper"><span class="user-name">${member.name}</span></div>
         </div>`
 
-
-
         document.getElementById('video-streams').insertAdjacentHTML('beforeend', player)
         user.videoTrack.play(`user-${user.uid}`)
 
     }
-
 
     if (mediaType === 'audio') {
         user.audioTrack.play()
@@ -75,10 +77,9 @@ let handlerUserJoined = async (user, mediaType) => {
 }
 
 let handlerUserLeft = async (user) => {
-
+    console.log('User left:', user);
     delete remoteUsers[user.uid]
     document.getElementById(`user-container-${user.uid}`).remove()
-
 }
 
 let leaveAndRemoveLocalStream = async () => {
@@ -102,9 +103,6 @@ let toggleCamera = async (e) => {
         e.target.style.backgroundColor = 'rgb(255,80,80,1)'
 
     }
-
-
-
 }
 
 
@@ -139,7 +137,7 @@ let createMember = async () => {
 }
 
 let getMember = async (user) => {
-    let response = await (`/get_member/?UID=${user.uid}&room_name=${CHANNEL}`)
+    let response = await fetch(`/get_member/?UID=${user.uid}&room_name=${CHANNEL}`)
     let member = await response.json()
     return member
 }
